@@ -63,36 +63,60 @@ names(pop)[3] <- "Pop"
 # Filter out irrelevant/repeated info 
 # Select continent index - merge all indexes - delete irrelevant observations
 
+b <- which(inmi$BirthCountry == "Sudamérica")
+c <- which(inmi$BirthCountry == "África")
+d <- which(inmi$BirthCountry == "Centro América y Caribe")
+e <- which(inmi$BirthCountry == "Asia")
+f <- which(inmi$BirthCountry == "América del Norte")
+g <- which(inmi$BirthCountry == "UE28 sin España")
+h <- which(inmi$BirthCountry == "España")
+i <- which(inmi$BirthCountry == "Oceanía")
+new <- c(b,c,d,e,f,g,h,i) # Select indices of relevant observations/continents
+inmi_select <- inmi[c(new),] 
+a <- which(inmi_select$AR == "Total Nacional")
+inmi1 <- inmi_select[-c(a),] # Remove Total Nacional
 
+# Sum UE28 and Spanish migrants together as Europe category. 
+inmi1$BirthCountry[inmi1$BirthCountry == "UE28 sin España"] <- "Europe"
+inmi1$BirthCountry[inmi1$BirthCountry == "España"] <- "Europe"
+inmi2 <- inmi1 |> group_by(AR,Year,BirthCountry) |> summarise(Migrants = sum(Migrants)) 
 
-new <- c(a,b,c,d,e,f)
-delidx <- unique(new)
-inmi2 <- inmi[-c(delidx),]
-
-inmi2$Migrants <- as.numeric(inmi2$Migrants)
+## inmi2 has the migrants across continents and year. 
 
 # Removing years for which we don't have common data
 remov <- c(which(inmi2$Year == 2008),which(inmi2$Year == 2009)) 
 removidx <- unique(remov)
 inmi2 <- inmi2[-c(removidx),]
-inmi2$AR <- substring(inmi2$AR,4) #Remove numbers from AR names
+inmi2$AR <- substring(inmi2$AR,4) 
+
+#Remove numbers from AR names 
 uploy$Year <- substring(uploy$Year,1,4)
 uploy$AR <- substring(uploy$AR,4)
 renta$AR <- substring(renta$AR,4)
 pop$AR <- substring(pop$AR,4)
 
+# Convert crime dataset to a compatible format to merge it later. 
 pivot <- pivot_longer(crime,2:13, names_to = "Year", values_to = "CrimeRate")
-df <- merge(inmi2,pivot, by = c("AR","Year"))  
+df <- merge(inmi2,pivot, by = c("AR","Year"))  # Migrants dataframe with crime rates. 
 
 # Converting to annual Paro data. 
 uploy_annual <- uploy %>%  group_by(AR,Year) %>%  summarise(Paro = mean(Total))
 
-df_add_paro <- merge(df,uploy_annual, by = c("AR","Year")) 
-df_add_renta <- merge(df_add_paro, renta, by = c("AR","Year")) # Final Dataset so far
-df_final <- merge(df_add_renta, pop, by = c("AR","Year"))
+df_add_paro <- merge(df,uploy_annual, by = c("AR","Year")) # Migrants + Crime rates + Unemployment
+df_add_renta <- merge(df_add_paro, renta, by = c("AR","Year")) # Migrants + Crime rates + Unemployment + Household income
+df_final <- merge(df_add_renta, pop, by = c("AR","Year")) # Final data set so far.
+
+df_wide <- df_final |> pivot_wider(names_from = BirthCountry, values_from = Migrants)  # Final data set with migrants and Birthcountry made wider as column variables. 
+
+
 ```
 
+
+
+We save some unused commands here. 
 ```{r message=FALSE,warning=FALSE}
+
+
 
 df_group <- df_final %>% group_by(AR,Year,BirthCountry) %>% summarise(Migrants = sum(Migrants,na.rm = TRUE), CrimeRate = mean(CrimeRate, na.rm = TRUE)) # Groupped by AR and year to have a clear view of data without giving importance to BirthCountry. 
 
