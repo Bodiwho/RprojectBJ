@@ -108,6 +108,7 @@ df_final <- merge(df_add_renta, pop, by = c("AR","Year")) # Final data set so fa
 
 df_wide <- df_final |> pivot_wider(names_from = BirthCountry, values_from = Migrants)  # Final data set with migrants and Birthcountry made wider as column variables. 
 
+colnames(df_wide)[7:13] <- c("Migrants_Africa","Migrants_NAmerica", "Migrants_Asia","Migrants_CAmerica_Caribbean", "Migrants_Europe","Migrants_Europe","Migrants_Oceania", "Migrants_SAmerica")
 
 ```
 
