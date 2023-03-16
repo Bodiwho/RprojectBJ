@@ -38,6 +38,11 @@ uploy <- uploy[,c(2,4,5)]
 renta <- read.delim2("renta.csv", fileEncoding="latin1")
 renta <- renta[,c(1,3,4)]
 renta$Total <- as.numeric(renta$Total)*1000 # Easy change the decimal symbol. 
+pop <- read.delim2("pop.csv", fileEncoding="latin1", dec = ",")
+pop <- pop[,c(1,3,4)]
+
+pop$Total <- gsub("[.]", "", pop$Total) #Remove "." to convert the variable to numeric. 
+pop$Total <- as.numeric(pop$Total)
 
 names(uploy)[1] <- "AR"
 names(uploy)[2] <- "Year"
@@ -48,18 +53,18 @@ names(inmi)[1] <- "AR"
 names(inmi)[2] <- "BirthCountry"
 names(inmi)[3] <- "Year"
 names(inmi)[4] <- "Migrants"
+names(pop)[1] <- "AR"
+names(pop)[2] <- "Year"
+names(pop)[3] <- "Pop"
 ```
 
 
 ```{r message=FALSE,warning=FALSE}
 # Filter out irrelevant/repeated info 
-# Select index - merge all indexes - delete irrelevant observations
-a <- which(inmi$AR == "Total Nacional")
-b <- which(inmi$BirthCountry == "Total")
-c <- which(inmi$BirthCountry == "UE27_2020 sin España")
-d <- which(inmi$BirthCountry == "UE28 sin España")
-e <- which(inmi$BirthCountry == "Europa menos UE28")
-f <- which(inmi$BirthCountry == "Europa menos UE27_2020")
+# Select continent index - merge all indexes - delete irrelevant observations
+
+
+
 new <- c(a,b,c,d,e,f)
 delidx <- unique(new)
 inmi2 <- inmi[-c(delidx),]
@@ -74,6 +79,8 @@ inmi2$AR <- substring(inmi2$AR,4) #Remove numbers from AR names
 uploy$Year <- substring(uploy$Year,1,4)
 uploy$AR <- substring(uploy$AR,4)
 renta$AR <- substring(renta$AR,4)
+pop$AR <- substring(pop$AR,4)
+
 pivot <- pivot_longer(crime,2:13, names_to = "Year", values_to = "CrimeRate")
 df <- merge(inmi2,pivot, by = c("AR","Year"))  
 
@@ -81,13 +88,20 @@ df <- merge(inmi2,pivot, by = c("AR","Year"))
 uploy_annual <- uploy %>%  group_by(AR,Year) %>%  summarise(Paro = mean(Total))
 
 df_add_paro <- merge(df,uploy_annual, by = c("AR","Year")) 
-df_final <- merge(df_add_paro, renta, by = c("AR","Year")) # Final Dataset so far
-
+df_add_renta <- merge(df_add_paro, renta, by = c("AR","Year")) # Final Dataset so far
+df_final <- merge(df_add_renta, pop, by = c("AR","Year"))
 ```
 
 ```{r message=FALSE,warning=FALSE}
 
-df_group <- df_final %>% group_by(AR,Year) %>% summarise(Migrants = sum(Migrants,na.rm = TRUE), CrimeRate = mean(CrimeRate, na.rm = TRUE)) # Groupped by AR and year to have a clear view of data without giving importance to BirthCountry. 
+df_group <- df_final %>% group_by(AR,Year,BirthCountry) %>% summarise(Migrants = sum(Migrants,na.rm = TRUE), CrimeRate = mean(CrimeRate, na.rm = TRUE)) # Groupped by AR and year to have a clear view of data without giving importance to BirthCountry. 
+
+a <- which(inmi$AR == "Total Nacional")
+b <- which(inmi$BirthCountry == "Total")
+c <- which(inmi$BirthCountry == "UE27_2020 sin España")
+d <- which(inmi$BirthCountry == "UE28 sin España")
+e <- which(inmi$BirthCountry == "Europa menos UE28")
+f <- which(inmi$BirthCountry == "Europa menos UE27_2020")
 
 
 ```
