@@ -79,9 +79,7 @@ inmi1 <- inmi_select[-c(a),] # Remove Total Nacional
 # Sum UE28 and Spanish migrants together as Europe category. 
 inmi1$BirthCountry[inmi1$BirthCountry == "UE28 sin España"] <- "Europe"
 inmi1$BirthCountry[inmi1$BirthCountry == "España"] <- "Europe"
-inmi2 <- inmi1 |> group_by(AR,Year,BirthCountry) |> summarise(Migrants = sum(Migrants, na.rm = TRUE)) 
-
-## inmi2 has the migrants across continents and year. 
+inmi2 <- inmi1 |> group_by(AR,Year,BirthCountry) |> summarise(Migrants = sum(Migrants, na.rm = TRUE)) # inmi2 has the migrants across continents and year. 
 
 # Removing years for which we don't have common data
 remov <- c(which(inmi2$Year == 2008),which(inmi2$Year == 2009)) 
@@ -98,32 +96,28 @@ pop$AR <- substring(pop$AR,4)
 # Convert crime dataset to a compatible format to merge it later. 
 pivot <- pivot_longer(crime,2:13, names_to = "Year", values_to = "CrimeRate")
 df <- merge(inmi2,pivot, by = c("AR","Year"))  # Migrants dataframe with crime rates. 
+```
 
-# Converting to annual Paro data. 
-uploy_annual <- uploy %>%  group_by(AR,Year) %>%  summarise(Paro = mean(Total, na.rm = TRUE))
 
+```{r message=FALSE,warning=FALSE}
+uploy_annual <- uploy %>%  group_by(AR,Year) %>%  summarise(Paro = mean(Total, na.rm = TRUE))# Converting to annual Paro data. 
 df_add_paro <- merge(df,uploy_annual, by = c("AR","Year")) # Migrants + Crime rates + Unemployment
 df_add_renta <- merge(df_add_paro, renta, by = c("AR","Year")) # Migrants + Crime rates + Unemployment + Household income
 df_final <- merge(df_add_renta, pop, by = c("AR","Year")) # Final data set so far.
-
 df_wide <- df_final |> pivot_wider(names_from = BirthCountry, values_from = Migrants)  # Final data set with migrants and Birthcountry made wider as column variables. 
 
 colnames(df_wide)[7:13] <- c("Migrants_Africa","Migrants_NAmerica", "Migrants_Asia","Migrants_CAmerica_Caribbean","Migrants_Europe","Migrants_Oceania", "Migrants_SAmerica")
 
+# Migrants/Population share
 df_wide_share <- transform(df_wide, Migrants_Africa = Migrants_Africa*100/Pop, Migrants_Asia = Migrants_Asia*100/Pop,Migrants_NAmerica = Migrants_NAmerica*100/Pop, Migrants_CAmerica_Caribbean = Migrants_CAmerica_Caribbean*100/Pop, Migrants_SAmerica = Migrants_SAmerica*100/Pop, Migrants_Europe = Migrants_Europe*100/Pop, Migrants_Oceania = Migrants_Oceania*100/Pop)
                            
-                      
-  
-  
-  
+
 ```
 
 
 
 We save some unused commands here. 
 ```{r message=FALSE,warning=FALSE}
-
-
 
 df_group <- df_final %>% group_by(AR,Year,BirthCountry) %>% summarise(Migrants = sum(Migrants,na.rm = TRUE), CrimeRate = mean(CrimeRate, na.rm = TRUE)) # Groupped by AR and year to have a clear view of data without giving importance to BirthCountry. 
 
