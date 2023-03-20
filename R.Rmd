@@ -1,0 +1,37 @@
+---
+title: "Project_Crime"
+author: "Bodi and Jinni"
+date: "2023-03-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+```
+
+```{r warning=FALSE, message=FALSE}
+
+
+```
+
+Select predictors for our dataset and have one dataset that is groupped by states. 
+
+df_com is by communities 
+df_state is by states 
+
+```{r warning=FALSE, message=FALSE}
+df <- read_csv("crime.csv")
+df_com <- select(df, communityName, state, ViolentCrimesPerPop, population, racepctblack, racePctWhite, racePctAsian, racePctHisp, agePct12t21, agePct12t29, agePct16t24, agePct65up, medIncome, PctPopUnderPov, PctNotHSGrad, PctUnemployed, TotalPctDiv, PctKidsBornNeverMar, RentMedian, PctForeignBorn )
+
+df_state_dec <- df_com |> group_by(state) |> summarise(ViolentCrimesPerPop = sum(ViolentCrimesPerPop), population = sum(population), racepctblack = mean(racepctblack), racePctWhite = mean(racePctWhite), racePctAsian = mean(racePctAsian), racePctHisp = mean(racePctHisp), agePct12t21 = mean(agePct12t21), agePct12t29 = mean(agePct12t29), agePct16t24 = mean(agePct16t24), agePct65up = mean(agePct65up), medIncome = mean(medIncome), PctPopUnderPov = mean(PctPopUnderPov), PctNotHSGrad = mean(PctNotHSGrad), PctUnemployed = mean(PctUnemployed), TotalPctDiv = mean(TotalPctDiv), PctKidsBornNeverMar = mean(PctKidsBornNeverMar), RentMedian = mean(RentMedian), PctForeignBorn = mean(PctForeignBorn))
+
+df_state <- df_state %>%  mutate_if(is.numeric, round, digits=2)
+
+```
+
+
