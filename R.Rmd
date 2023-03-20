@@ -30,7 +30,7 @@ df_com <- select(df, communityName, state, ViolentCrimesPerPop, population, race
 
 df_state_dec <- df_com |> group_by(state) |> summarise(ViolentCrimesPerPop = sum(ViolentCrimesPerPop), population = sum(population), racepctblack = mean(racepctblack), racePctWhite = mean(racePctWhite), racePctAsian = mean(racePctAsian), racePctHisp = mean(racePctHisp), agePct12t21 = mean(agePct12t21), agePct12t29 = mean(agePct12t29), agePct16t24 = mean(agePct16t24), agePct65up = mean(agePct65up), medIncome = mean(medIncome), PctPopUnderPov = mean(PctPopUnderPov), PctNotHSGrad = mean(PctNotHSGrad), PctUnemployed = mean(PctUnemployed), TotalPctDiv = mean(TotalPctDiv), PctKidsBornNeverMar = mean(PctKidsBornNeverMar), RentMedian = mean(RentMedian), PctForeignBorn = mean(PctForeignBorn))
 
-df_state <- df_state %>%  mutate_if(is.numeric, round, digits=2)
+df_state <- df_state_dec %>%  mutate_if(is.numeric, round, digits=2)
 
 ```
 
