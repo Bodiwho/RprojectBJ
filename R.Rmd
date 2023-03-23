@@ -13,7 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(reshape2)
 library(rmarkdown)
-
+library(GGally)
+library(caret)
+library(corrplot)
 ```
 
 ```{r warning=FALSE, message=FALSE}
@@ -55,26 +57,9 @@ scatter <- function(input) {
 for (i in 1:length(predictors)) {
   scatter(predictors[, i])
 }
-
 ```
 
 ```{r warning=FALSE, message=FALSE, fig.width=8, fig.height=6 }
-predictors <- df_com[,4:20]
-
-# Title {.tabset .tabset-fade}
-scatter1 <- function(input) {
-  x <- unlist(input)
-  y <- df_com$ViolentCrimesPerPop
-  fit <- lm(y ~ x, data = df_com)
-  plot_title <- paste("Scatter Plot of logged-", names(input), "vs. ViolentCrimesPerPop")
-  assign(paste0("plot_var", names(input)), plot(fit, 1, main = plot_title))
-}
-
-# Check for linearity with residuals vs fitted values
-
-for (i in 3:length(predictors)) {
-  scatter1(predictorslog[, i])
-}
 
 
 ```
@@ -83,30 +68,42 @@ for (i in 3:length(predictors)) {
 Boxplots
 ```{r warning=FALSE, message=FALSE}
 
-df_box <- df_com[, c("racepctblack", "racePctWhite", "racePctAsian", "racePctHisp", "ViolentCrimesPerPop")]
-df_box_melt <- melt(df_box, id.vars = "ViolentCrimesPerPop", variable.name = "Race")
+df_box <- df_com[, c("racepctblack", "racePctWhite", "racePctAsian", "racePctHisp", "medIncome")]
+df_box_melt <- melt(df_box, id.vars = "medIncome", variable.name = "Race")
+test <- df_box %>% gather(key = "Race", value = "Percentage", -medIncome)
 
-ggplot(df_box_melt, aes(y = value, fill = Race)) +
-  geom_boxplot() + ylab("Percentage of people of each race")
 
-df_box_state <- df_state[, c("racepctblack", "racePctWhite", "racePctAsian", "racePctHisp", "ViolentCrimesPerPop")]
-df_box_melt_state <- melt(df_box_state, id.vars = "ViolentCrimesPerPop", variable.name = "Race")
+ggplot(df_box_melt,aes(x = value, y = medIncome)) + geom_point() + facet_wrap(~ Race) + labs(title = "Median income vs Race Percentage") + xlab("Race Percentage") + ylab("Median Income")
 
-ggplot(df_box_melt_state, aes(y = value, fill = Race)) +
-  geom_boxplot() + ylab("Percentage of people of each race")
+df_box2 <- df_com[, c("racepctblack", "racePctWhite", "racePctAsian", "racePctHisp", "ViolentCrimesPerPop")]
+df_box_melt2 <- melt(df_box2, id.vars = "ViolentCrimesPerPop", variable.name = "Race")
+
+ggplot(df_box_melt2,aes(x = value, y = ViolentCrimesPerPop, color = Race)) + geom_point() + facet_wrap(~ Race) + labs(title = "Median income vs Race Percentage") + xlab("Race Percentage") + ylab("Median Income")
+
+
+#Graph
+
+ggplot(df_box_melt2,aes(x =value  , y = ViolentCrimesPerPop , color = Race)) + geom_point() + geom_smooth(method = "lm", color = "black", size = 0.5, alpha = 0.5) +  facet_wrap(~ Race) + labs(title = "ViolentCrimesPerPop vs Race Percentage") + ylab("ViolentCrimesPerPop") + xlab("Race Percentage") + theme(legend.position = "none")
+
+#Graph
+ggplot(df_com, aes(y =ViolentCrimesPerPop, x = medIncome)) + geom_point() + geom_smooth() + labs(title = "Median Income vs Violent Crimes per 100K people")
 
 ```
 
 ```{r warning=FALSE, message=FALSE}
-
-ggplot(df_state,aes(x = PctKidsBornNeverMar , y= ViolentCrimesPerPop, label = state)) + geom_point(aes(color = state)) + geom_text() + theme(legend.position = "none") 
+R = select(df_com, -c(state,communityName)) %>% 
+cor(use = "pairwise.complete.obs")
+corrplot(R,method="color", addCoef.col = "black",
+  order = "AOE", number.cex = 0.5, tl.cex = 0.6, tl.col = "black")
 
 ```
 
-Density graph of ViolentCrimesPerPop in percentages
+Histogram graph of ViolentCrimesPerPop in percentages
 ```{r warning=FALSE, message=FALSE}
-ggplot(data = df_com, aes(x = ViolentCrimesPerPop)) + geom_density() + scale_y_continuous(labels = scales::percent_format()) + labs(title = "Density graph of ViolentCrimesPerPop in percentages across communities")
 
+ggplot(df_com, aes(x = ViolentCrimesPerPop)) +
+  geom_histogram(binwidth = 40,color = "white", fill = "blue") +
+  labs(x = "Violent Crimes per 100,000 People", y = "Frequency", title = "Frequency of Crime cases for all communities")
 ```
 
 ```{r warning=FALSE, message=FALSE}
