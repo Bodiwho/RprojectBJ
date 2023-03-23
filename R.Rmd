@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r warning=FALSE, message=FALSE}
 library(tidyverse)
+library(reshape2)
+library(rmarkdown)
 
 ```
 
@@ -28,10 +30,86 @@ df_state is by states
 df <- read_csv("crime.csv")
 df_com <- select(df, communityName, state, ViolentCrimesPerPop, population, racepctblack, racePctWhite, racePctAsian, racePctHisp, agePct12t21, agePct12t29, agePct16t24, agePct65up, medIncome, PctPopUnderPov, PctNotHSGrad, PctUnemployed, TotalPctDiv, PctKidsBornNeverMar, RentMedian, PctForeignBorn )
 
-df_state_dec <- df_com |> group_by(state) |> summarise(ViolentCrimesPerPop = sum(ViolentCrimesPerPop), population = sum(population), racepctblack = mean(racepctblack), racePctWhite = mean(racePctWhite), racePctAsian = mean(racePctAsian), racePctHisp = mean(racePctHisp), agePct12t21 = mean(agePct12t21), agePct12t29 = mean(agePct12t29), agePct16t24 = mean(agePct16t24), agePct65up = mean(agePct65up), medIncome = mean(medIncome), PctPopUnderPov = mean(PctPopUnderPov), PctNotHSGrad = mean(PctNotHSGrad), PctUnemployed = mean(PctUnemployed), TotalPctDiv = mean(TotalPctDiv), PctKidsBornNeverMar = mean(PctKidsBornNeverMar), RentMedian = mean(RentMedian), PctForeignBorn = mean(PctForeignBorn))
+df_state_dec <- df_com |> group_by(state) |> summarise(ViolentCrimesPerPop = mean(ViolentCrimesPerPop,na.rm = TRUE), population = sum(population), racepctblack = mean(racepctblack), racePctWhite = mean(racePctWhite), racePctAsian = mean(racePctAsian), racePctHisp = mean(racePctHisp), agePct12t21 = mean(agePct12t21), agePct12t29 = mean(agePct12t29), agePct16t24 = mean(agePct16t24), agePct65up = mean(agePct65up), medIncome = mean(medIncome), PctPopUnderPov = mean(PctPopUnderPov), PctNotHSGrad = mean(PctNotHSGrad), PctUnemployed = mean(PctUnemployed), TotalPctDiv = mean(TotalPctDiv), PctKidsBornNeverMar = mean(PctKidsBornNeverMar), RentMedian = mean(RentMedian), PctForeignBorn = mean(PctForeignBorn))
 
 df_state <- df_state_dec %>%  mutate_if(is.numeric, round, digits=2)
+
+paged_table(df_com)
+
+```
+
+Residuals vs Fitted Values of all predictors 
+```{r warning=FALSE, message=FALSE, fig.width=8, fig.height=6 }
+predictors <- df_com[,4:20]
+
+# Title {.tabset .tabset-fade}
+scatter <- function(input) {
+  x <- unlist(input)
+  y <- df_com$ViolentCrimesPerPop
+  fit <- lm(y ~ x, data = df_com)
+  plot_title <- paste("Scatter Plot of", names(input), "vs. ViolentCrimesPerPop")
+  assign(paste0("plot_var", names(input)), plot(fit, 1, main = plot_title))
+}
+
+# Check for linearity with residuals vs fitted values
+for (i in 1:length(predictors)) {
+  scatter(predictors[, i])
+}
+
+```
+
+```{r warning=FALSE, message=FALSE, fig.width=8, fig.height=6 }
+predictors <- df_com[,4:20]
+
+# Title {.tabset .tabset-fade}
+scatter1 <- function(input) {
+  x <- unlist(input)
+  y <- df_com$ViolentCrimesPerPop
+  fit <- lm(y ~ x, data = df_com)
+  plot_title <- paste("Scatter Plot of logged-", names(input), "vs. ViolentCrimesPerPop")
+  assign(paste0("plot_var", names(input)), plot(fit, 1, main = plot_title))
+}
+
+# Check for linearity with residuals vs fitted values
+
+for (i in 3:length(predictors)) {
+  scatter1(predictorslog[, i])
+}
+
 
 ```
 
 
+Boxplots
+```{r warning=FALSE, message=FALSE}
+
+df_box <- df_com[, c("racepctblack", "racePctWhite", "racePctAsian", "racePctHisp", "ViolentCrimesPerPop")]
+df_box_melt <- melt(df_box, id.vars = "ViolentCrimesPerPop", variable.name = "Race")
+
+ggplot(df_box_melt, aes(y = value, fill = Race)) +
+  geom_boxplot() + ylab("Percentage of people of each race")
+
+df_box_state <- df_state[, c("racepctblack", "racePctWhite", "racePctAsian", "racePctHisp", "ViolentCrimesPerPop")]
+df_box_melt_state <- melt(df_box_state, id.vars = "ViolentCrimesPerPop", variable.name = "Race")
+
+ggplot(df_box_melt_state, aes(y = value, fill = Race)) +
+  geom_boxplot() + ylab("Percentage of people of each race")
+
+```
+
+```{r warning=FALSE, message=FALSE}
+
+ggplot(df_state,aes(x = PctKidsBornNeverMar , y= ViolentCrimesPerPop, label = state)) + geom_point(aes(color = state)) + geom_text() + theme(legend.position = "none") 
+
+```
+
+Density graph of ViolentCrimesPerPop in percentages
+```{r warning=FALSE, message=FALSE}
+ggplot(data = df_com, aes(x = ViolentCrimesPerPop)) + geom_density() + scale_y_continuous(labels = scales::percent_format()) + labs(title = "Density graph of ViolentCrimesPerPop in percentages across communities")
+
+```
+
+```{r warning=FALSE, message=FALSE}
+
+
+```
